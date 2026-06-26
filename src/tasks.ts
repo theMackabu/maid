@@ -7,11 +7,8 @@ import { createTable, hydrate, hydrateShell } from './placeholders.ts';
 import { hashPath, readStoredCache, restoreTargets, saveTargets, writeStoredCache } from './cache.ts';
 
 import * as ui from './ui.ts';
+import { ant } from './runtime.ts';
 import type { Context, RunOptions, TaskConfig } from './types.ts';
-
-const antRuntime = globalThis as typeof globalThis & {
-  Ant?: { msleep?: (milliseconds: number) => void };
-};
 
 export function taskScripts(task: TaskConfig): string[] {
   return Array.isArray(task.script) ? task.script : [task.script];
@@ -161,20 +158,15 @@ function runScripts(scripts: string[], table: Map<string, string>, cwd: string, 
 }
 
 function sleep(ms: number): void {
-  if (typeof antRuntime.Ant?.msleep === 'function') {
-    antRuntime.Ant.msleep(ms);
+  if (ms <= 0) return;
+  if (typeof ant?.msleep === 'function') {
+    ant.msleep(ms);
     return;
   }
 
-  if (blockingSleep(ms)) return;
-  const end = Date.now() + ms;
-  while (Date.now() < end) {}
-}
-
-function blockingSleep(ms: number): boolean {
-  if (typeof SharedArrayBuffer === 'undefined' || typeof Atomics.wait !== 'function') return false;
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-  return true;
+  if (typeof SharedArrayBuffer !== 'undefined' && typeof Atomics.wait === 'function') {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+  }
 }
 
 export function initMaidfile(): void {

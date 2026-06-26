@@ -1,7 +1,14 @@
 import chalk from 'chalk';
+import { ant } from './runtime.ts';
 import type { Context, TaskConfig } from './types.ts';
 
 const PICKER_PAGE_SIZE = 7;
+
+const TERMINAL_SIGNALS: ReadonlyArray<readonly [NodeJS.Signals, number]> = [
+  ['SIGINT', 2],
+  ['SIGTERM', 15],
+  ['SIGHUP', 1]
+];
 
 export const symbols = {
   sep: chalk.whiteBright(':'),
@@ -113,10 +120,18 @@ export async function selectTask(context: Context, names: string[]): Promise<str
     return filtered.length > 0 ? filtered : names;
   };
 
+  let uninstallSignals = () => {};
   const cleanup = () => {
+    uninstallSignals();
+    uninstallSignals = () => {};
     input.setRawMode(false);
     input.pause();
     output.write('\x1b[?25h');
+  };
+
+  const restoreOnSignal = () => {
+    input.setRawMode(false);
+    output.write('\x1b[?25h\n');
   };
 
   const render = () => {
@@ -196,11 +211,34 @@ export async function selectTask(context: Context, names: string[]): Promise<str
 
     input.setRawMode(true);
     input.resume();
+    uninstallSignals = installSignalGuard(restoreOnSignal);
     input.on('data', onData);
     render();
   }).finally(() => {
     input.removeAllListeners('data');
   });
+}
+
+function installSignalGuard(restore: () => void): () => void {
+  if (typeof ant?.signal === 'function') {
+    const signal = ant.signal;
+    for (const [, num] of TERMINAL_SIGNALS) signal(num, restore);
+    return () => {
+      for (const [, num] of TERMINAL_SIGNALS) signal(num, undefined);
+    };
+  }
+
+  const handlers = TERMINAL_SIGNALS.map(([name, num]) => {
+    const handler = () => {
+      restore();
+      process.exit(128 + num);
+    };
+    process.on(name, handler);
+    return [name, handler] as const;
+  });
+  return () => {
+    for (const [name, handler] of handlers) process.removeListener(name, handler);
+  };
 }
 
 export function printTaskList(context: Context, names: string[]): void {
