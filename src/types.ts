@@ -13,6 +13,7 @@ export interface Maidfile {
 
 export interface TaskConfig {
   script: string | string[];
+  file?: string;
   hide?: boolean;
   path?: string;
   info?: string;

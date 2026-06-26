@@ -1,0 +1,22 @@
+{
+  "id": "030-external-file",
+  "name": "external script file runs with env",
+  "files": {
+    "maidfile": "[env]\nGREETING = \"hi-from-env\"\n\n[tasks.fromfile]\nfile = \"scripts/run.sh\"\n",
+    "scripts/run.sh": "#!/usr/bin/env bash\nset -euo pipefail\necho file-task-ran\necho \"$GREETING\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "fromfile"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "file-task-ran",
+          "hi-from-env"
+        ]
+      }
+    }
+  ]
+}

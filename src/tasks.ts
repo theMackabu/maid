@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import chalk from 'chalk';
 import path from 'node:path';
 
@@ -83,8 +84,7 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
   }
 
   if (!options.quiet && !options.dependency) {
-    const scriptPreview = scripts.map(script => hydrateShell(script, table)).join('; ');
-    ui.taskStart(scriptPreview, cwd === context.projectRoot ? null : cwd);
+    ui.taskStart(taskPreview(task, scripts, table), cwd === context.projectRoot ? null : cwd);
   }
 
   const start = Date.now();
@@ -93,7 +93,7 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
   let exitCode = 0;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    exitCode = runScripts(scripts, table, cwd, options);
+    exitCode = runScripts(context, task, scripts, table, cwd, options);
     if (exitCode === 0 || attempt === attempts) break;
     if (!options.quiet && !options.dependency) ui.retrying(name, attempt + 1, attempts, exitCode);
     if (delayMs > 0) sleep(delayMs);
@@ -139,22 +139,75 @@ function shellCommand(command: string): [string, string[]] {
   return ['/bin/sh', ['-c', command]];
 }
 
-function runScripts(scripts: string[], table: Map<string, string>, cwd: string, options: RunOptions): number {
+type Stdio = 'pipe' | 'inherit';
+
+function taskPreview(task: TaskConfig, scripts: string[], table: Map<string, string>): string {
+  if (task.file) return task.file;
+  return scripts
+    .map(raw => {
+      const command = hydrateShell(raw, table);
+      const shebang = parseShebang(command);
+      return shebang ? `${firstLine(command)} (script)` : command;
+    })
+    .join('; ');
+}
+
+function runScripts(context: Context, task: TaskConfig, scripts: string[], table: Map<string, string>, cwd: string, options: RunOptions): number {
+  const stdio: Stdio = options.dependency && !options.logDependency ? 'pipe' : 'inherit';
+
+  if (task.file) {
+    return runFile(path.resolve(context.projectRoot, hydrate(task.file, table)), cwd, stdio);
+  }
+
   let exitCode = 0;
   for (const raw of scripts) {
     const command = hydrateShell(raw, table);
-    const stdio = options.dependency && !options.logDependency ? 'pipe' : 'inherit';
-    const [shell, shellArgs] = shellCommand(command);
-    const result = spawnSync(shell, shellArgs, {
-      cwd,
-      stdio,
-      env: process.env
-    });
-
-    if (result.error) throw result.error;
-    exitCode = result.status ?? 1;
+    const shebang = parseShebang(command);
+    exitCode = shebang ? runShebangBlock(command, shebang, cwd, stdio) : runCommand(...shellCommand(command), cwd, stdio);
   }
   return exitCode;
+}
+
+interface Shebang {
+  cmd: string;
+  args: string[];
+}
+
+function parseShebang(source: string): Shebang | null {
+  if (!source.startsWith('#!')) return null;
+  const tokens = firstLine(source).slice(2).trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return null;
+  return { cmd: tokens[0], args: tokens.slice(1) };
+}
+
+function runShebangBlock(content: string, shebang: Shebang, cwd: string, stdio: Stdio): number {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'maid-'));
+  const scriptPath = path.join(dir, 'task');
+  try {
+    fs.writeFileSync(scriptPath, content);
+    return runCommand(shebang.cmd, [...shebang.args, scriptPath], cwd, stdio);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function runFile(filePath: string, cwd: string, stdio: Stdio): number {
+  if (!fs.existsSync(filePath)) throw new Error(`Task file not found: ${filePath}`);
+  const shebang = parseShebang(fs.readFileSync(filePath, 'utf8'));
+  if (shebang) return runCommand(shebang.cmd, [...shebang.args, filePath], cwd, stdio);
+  if (process.platform === 'win32') return runCommand('cmd.exe', ['/d', '/s', '/c', filePath], cwd, stdio);
+  return runCommand('/bin/sh', [filePath], cwd, stdio);
+}
+
+function runCommand(command: string, args: string[], cwd: string, stdio: Stdio): number {
+  const result = spawnSync(command, args, { cwd, stdio, env: process.env });
+  if (result.error) throw result.error;
+  return result.status ?? 1;
+}
+
+function firstLine(source: string): string {
+  const index = source.indexOf('\n');
+  return index === -1 ? source : source.slice(0, index);
 }
 
 function sleep(ms: number): void {

@@ -1,0 +1,20 @@
+{
+  "id": "031-script-file-conflict",
+  "name": "task with both script and file fails",
+  "files": {
+    "maidfile": "[tasks.bad]\nscript = \"echo hi\"\nfile = \"run.sh\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "bad"
+      ],
+      "expect": {
+        "status": 1,
+        "stderrIncludes": [
+          "use one"
+        ]
+      }
+    }
+  ]
+}

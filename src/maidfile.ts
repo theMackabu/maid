@@ -119,12 +119,19 @@ function normalizeTask(value: unknown, name: string, file: string): TaskConfig {
     throw new Error(`Task '${name}' in ${file} must be a string, array, or object.`);
   }
 
-  if (!('script' in value)) {
-    throw new Error(`Task '${name}' in ${file} is missing script.`);
+  const hasScript = 'script' in value;
+  const hasFile = typeof value.file === 'string';
+
+  if (hasScript && hasFile) {
+    throw new Error(`Task '${name}' in ${file} sets both script and file; use one.`);
+  }
+  if (!hasScript && !hasFile) {
+    throw new Error(`Task '${name}' in ${file} is missing script or file.`);
   }
 
   return {
-    script: normalizeScript(value.script, name, file),
+    script: hasScript ? normalizeScript(value.script, name, file) : [],
+    file: hasFile ? (value.file as string) : undefined,
     hide: typeof value.hide === 'boolean' ? value.hide : undefined,
     path: typeof value.path === 'string' ? value.path : undefined,
     info: typeof value.info === 'string' ? value.info : undefined,

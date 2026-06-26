@@ -1,0 +1,23 @@
+{
+  "id": "029-shebang-block",
+  "name": "shebang block runs as one program",
+  "files": {
+    "maidfile": "[tasks.check]\nscript = '''\n#!/usr/bin/env bash\nif [[ -n \"${BASH_VERSION:-}\" ]]; then\n  echo ran-in-bash\nelse\n  echo not-bash\nfi\n'''\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "check"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "ran-in-bash"
+        ],
+        "stdoutNotIncludes": [
+          "not-bash"
+        ]
+      }
+    }
+  ]
+}

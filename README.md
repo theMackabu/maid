@@ -41,6 +41,27 @@ script = "rm -rf dist"
 Dependencies are quiet by default. Use `stdout = true` or `output = true` when a
 dependency should show its command output.
 
+### Scripts with logic
+
+Start a `script` with a shebang to run the whole block as one program — real
+control flow, no nested `bash -c '...'`:
+
+```toml
+[tasks.deploy]
+script = '''
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ -d dist ]]; then
+  rsync -a dist/ "$DEPLOY_TARGET"
+else
+  echo "nothing to deploy"
+fi
+'''
+```
+
+Or point at a file with `file = "scripts/deploy.sh"` (resolved relative to the
+maidfile). A task uses either `script` or `file`, not both.
+
 ## Development
 
 ```bash
