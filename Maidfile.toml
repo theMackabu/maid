@@ -1,6 +1,6 @@
 [project]
 name = "maid"
-version = "0.3.0"
+version = "0.3.1"
 
 [tasks]
 start = { info = "Run Maid with Ant", script = "ant src/main.ts" }

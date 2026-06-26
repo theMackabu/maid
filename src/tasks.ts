@@ -84,7 +84,8 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
   }
 
   if (!options.quiet && !options.dependency) {
-    ui.taskStart(taskPreview(task, scripts, table), cwd === context.projectRoot ? null : cwd);
+    const cwdLabel = cwd === context.projectRoot ? null : path.relative(context.projectRoot, cwd) || cwd;
+    ui.taskStart(taskPreview(task, scripts, table), cwdLabel);
   }
 
   const start = Date.now();
