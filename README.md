@@ -1,6 +1,7 @@
 # Maid
 
 Fast local task runner for project scripts, dependencies, and cached build steps.
+
 Maid is written in TypeScript and runs on [Ant](https://antjs.org), Node.js, Bun, Deno, and other JavaScript runtimes.
 
 ## Install
