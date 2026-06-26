@@ -1,0 +1,21 @@
+{
+  "id": "014-system-json-hydrated",
+  "name": "system json-hydrated",
+  "files": {
+    "maidfile": "[env]\nNAME = \"world\"\n\n[tasks.hello]\nscript = \"echo %{env.NAME}\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "--system",
+        "json-hydrated"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "echo world"
+        ]
+      }
+    }
+  ]
+}

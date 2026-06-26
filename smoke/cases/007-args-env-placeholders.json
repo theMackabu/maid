@@ -1,0 +1,21 @@
+{
+  "id": "007-args-env-placeholders",
+  "name": "args and env placeholders",
+  "files": {
+    "maidfile": "[env]\nNAME = \"world\"\n\n[tasks.hello]\nscript = \"echo %{env.NAME} %{arg.1}\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "hello",
+        "friend"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "world friend"
+        ]
+      }
+    }
+  ]
+}

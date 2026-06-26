@@ -1,0 +1,21 @@
+{
+  "id": "029-remote-removed",
+  "name": "remote mode is removed",
+  "files": {
+    "maidfile": "[tasks.noop]\nscript = \"echo noop\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "--remote",
+        "noop"
+      ],
+      "expect": {
+        "status": 1,
+        "stderrIncludes": [
+          "Remote/server mode was removed"
+        ]
+      }
+    }
+  ]
+}

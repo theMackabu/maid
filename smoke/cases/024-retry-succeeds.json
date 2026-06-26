@@ -1,0 +1,20 @@
+{
+  "id": "024-retry-succeeds",
+  "name": "retry succeeds",
+  "files": {
+    "maidfile": "[tasks.flaky]\nretry = 2\nscript = \"sh -c 'n=.count; c=$(cat $n 2>/dev/null || echo 0); c=$((c+1)); echo $c > $n; test $c -ge 2'\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "flaky"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "retrying flaky"
+        ]
+      }
+    }
+  ]
+}

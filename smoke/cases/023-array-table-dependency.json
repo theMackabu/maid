@@ -1,0 +1,20 @@
+{
+  "id": "023-array-table-dependency",
+  "name": "array table dependency output",
+  "files": {
+    "maidfile": "[tasks.dep]\nscript = \"echo table-dep\"\n\n[tasks.main]\nscript = \"echo main\"\n\n[[tasks.main.depends]]\ntask = \"dep\"\noutput = true\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "main"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "table-dep"
+        ]
+      }
+    }
+  ]
+}

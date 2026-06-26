@@ -1,0 +1,18 @@
+{
+  "id": "001-help-output",
+  "name": "help output",
+  "steps": [
+    {
+      "run": [
+        "--help"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "Usage:",
+          "--list"
+        ]
+      }
+    }
+  ]
+}

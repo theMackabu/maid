@@ -1,0 +1,22 @@
+{
+  "id": "011-project-info",
+  "name": "project info",
+  "files": {
+    "maidfile": "[project]\nname = \"demo\"\nversion = \"1.2.3\"\n\n[tasks.noop]\nscript = \"echo noop\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "--project",
+        "info"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "demo",
+          "1.2.3"
+        ]
+      }
+    }
+  ]
+}

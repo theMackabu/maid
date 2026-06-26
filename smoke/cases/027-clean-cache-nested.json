@@ -1,0 +1,26 @@
+{
+  "id": "027-clean-cache-nested",
+  "name": "clean cache from nested directory",
+  "dirs": [
+    "sub",
+    ".maid/cache/demo"
+  ],
+  "files": {
+    "maidfile": "[tasks.noop]\nscript = \"echo noop\"\n"
+  },
+  "steps": [
+    {
+      "cwd": "sub",
+      "run": [
+        "-C"
+      ],
+      "expect": {
+        "status": 0,
+        "pathNotExists": [
+          ".maid/cache",
+          "sub/.maid"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "009-task-path",
+  "name": "task path",
+  "dirs": [
+    "sub"
+  ],
+  "files": {
+    "maidfile": "[tasks.where]\npath = \"sub\"\nscript = \"pwd\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "where"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "${root}/sub"
+        ]
+      }
+    }
+  ]
+}

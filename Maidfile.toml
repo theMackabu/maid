@@ -1,55 +1,8 @@
-# Import tasks and environment from other files
-import = [
-   "build/scripts/build.toml", 
-   "build/scripts/test.toml",
-   "build/scripts/publish.toml"
-]
-
 [project]
 name = "maid"
-version = "2.0.0"
+version = "0.2.1"
 
-# Build on a remote server
-[project.server]
-token = "test_token1"
-address = { host = "localhost", port = 3500, tls = false }
-
-# Global environment (applied to shell)
-[env]
-BOOL = false
-STRING = 'test'
-TYPE = '%{dir.home} %{env.STRING} %{arg.1}'
-ARR = ['hello', 'world']
-VERSION='2.0.0'
-
-# Advanced task definition 
-[tasks.build]
-info = "Build binaries"
-depends = ["log:clean"]
-script = [
-   "cargo zigbuild --release --no-default-features --features client --color always", 
-   # "cargo zigbuild --release --all-features --color always", 
-   "cp target/release/maid bin/maid",
-   # "cp target/release/maid-server bin/maid-server",
-]
-
-# Build cache
-[tasks.build.cache]
-path = "maid"
-# target = ["bin/maid", "bin/maid-server"]
-target = ["bin/maid"]
-
-# Remote build target
-[tasks.build.remote]
-silent = false
-exclusive = false
-shell = "/bin/bash"
-image = "messense/cargo-zigbuild:latest"
-push = ["maid", "build", "Cargo.toml", "Cargo.lock"]
-pull = "bin"
-
-# Basic task definition 
 [tasks]
-clean.script = ["du -h bin", "rm -rf bin", "mkdir bin", "du -h bin"]
-install.script = ["maid build -q","sudo cp bin/maid /usr/local/bin", "maid -V"]
-api_server = { path = "bin", depends = ["build"], script = "./maid_server" }
+start = { info = "Run Maid with Ant", script = "ant src/main.ts" }
+typecheck = { info = "Type-check TypeScript", script = "antx tsc --noEmit" }
+smoke = { info = "Run feature smoke tests", script = "ant smoke/run.ts" }

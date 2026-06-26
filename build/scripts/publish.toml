@@ -1,6 +1,0 @@
-[tasks]
-publish = { info = "Publish releases", script = "maid publish_%{arg.1} -q" }
-publish_client = { script = "cargo publish -p maid", hide = true }
-publish_server = { script = "cargo publish -p maid_server", hide = true }
-publish_packages = { script = ["cargo publish -p pretty_number", "cargo publish -p global_placeholders"], hide = true }
-publish_all = { script = ["maid publish_client -q", "maid publish_server -q", "maid publish_packages -q"], hide = true }

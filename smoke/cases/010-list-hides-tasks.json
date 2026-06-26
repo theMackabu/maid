@@ -1,0 +1,24 @@
+{
+  "id": "010-list-hides-tasks",
+  "name": "list hides hidden and underscore tasks",
+  "files": {
+    "maidfile": "[tasks.visible]\nscript = \"echo visible\"\n\n[tasks.hidden]\nhide = true\nscript = \"echo hidden\"\n\n[tasks._private]\nscript = \"echo private\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "--list"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "visible"
+        ],
+        "stdoutNotIncludes": [
+          "hidden",
+          "_private"
+        ]
+      }
+    }
+  ]
+}

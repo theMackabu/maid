@@ -1,0 +1,20 @@
+{
+  "id": "022-object-dependency-stdout",
+  "name": "object dependency stdout",
+  "files": {
+    "maidfile": "[tasks.dep]\nscript = \"echo object-dep\"\n\n[tasks.main]\ndepends = { stdout = true, tasks = [\"dep\"] }\nscript = \"echo main\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "main"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "object-dep"
+        ]
+      }
+    }
+  ]
+}

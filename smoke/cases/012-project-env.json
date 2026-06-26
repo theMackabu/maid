@@ -1,0 +1,21 @@
+{
+  "id": "012-project-env",
+  "name": "project env",
+  "files": {
+    "maidfile": "[env]\nFOO = \"bar\"\n\n[tasks.noop]\nscript = \"echo noop\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "--project",
+        "env"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "FOO=bar"
+        ]
+      }
+    }
+  ]
+}

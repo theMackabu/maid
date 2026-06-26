@@ -1,0 +1,33 @@
+{
+  "id": "026-force-bypasses-cache",
+  "name": "force bypasses cache",
+  "dirs": [
+    "src"
+  ],
+  "files": {
+    "src/input.txt": "one\n",
+    "maidfile": "[tasks.build]\nscript = \"mkdir -p out && date +%s > out/result.txt\"\n\n[tasks.build.cache]\npath = \"src\"\ntarget = [\"out/result.txt\"]\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "build"
+      ],
+      "expect": {
+        "status": 0
+      }
+    },
+    {
+      "run": [
+        "--force",
+        "build"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutNotIncludes": [
+          "skipping task due to cached files"
+        ]
+      }
+    }
+  ]
+}

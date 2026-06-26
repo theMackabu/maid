@@ -1,0 +1,21 @@
+{
+  "name": "maid",
+  "version": "0.2.1",
+  "private": true,
+  "type": "module",
+  "description": "Fast local task runner for project scripts, dependencies, and cached build steps.",
+  "bin": {
+    "maid": "./bin/maid.js"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "jiti": "^2.7.0",
+    "smol-toml": "^1.4.2",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "@types/chalk": "^2.2.4"
+  }
+}

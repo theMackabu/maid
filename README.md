@@ -1,47 +1,49 @@
-> [!CAUTION]
-> # This project is going through a full rewrite.
-> Any previous version may contain unknown and unfixed bugs.
+# Maid
 
-<p align="center"><img style="width: 350px;" src="https://maid.ci/images/maid_title.svg?v=2" /></p>
+Fast local task runner for project scripts, dependencies, and cached build steps.
+Maid is written in TypeScript and runs on [Ant](https://antjs.org), Node.js, Bun, Deno, and other JavaScript runtimes.
 
-##
+## Install
 
-Maid is a task runner / build tool that aims to be simpler and easier to use than, for example, GNU Make.
-Tasks are stored in a file called `maidfile` using the TOML syntax.
-
-<img style="width: 1100px;" src="https://cdn.justjs.dev/assets/maid_screenshot.png">
-
-### Quick Start
-
-See the [installation](#installation) section for how to install just on your computer. Try running `maid --version` to make sure that it's installed correctly.
-
-Once maid is installed and working, create a file named maidfile in the root of your project with the following contents:
-
-```toml
-[tasks.hello]
-info = "this is a comment"
-script = "echo 'hello world'"
-```
-
-Running maid with no arguments shows a list of tasks in the maidfile:
+Run without installing:
 
 ```bash
-~ $ maid
-? Select a task to run:
-> hello (this is a comment)
-[↑↓ to move, enter to select, type to filter]
+antx maid
 ```
 
-For more commands, check out `maid --help`
+Install globally:
 
-### Installation
+```bash
+ant i -g maid
+```
 
-Pre-built binaries for Linux, MacOS, and Windows can be found on the [releases](https://github.com/exact-labs/maid/releases) page.
+## Usage
 
-#### Building
+```bash
+maid --help
+maid typecheck
+```
 
-- Clone the project `git clone https://github.com/exact-labs/maid.git`
-- Open a terminal in the project folder
-- Check if you have cargo (Rust's package manager) installed, just type in `cargo`
-- If cargo is installed, run `cargo build --release`
-- Put the executable into one of your PATH entries
+## Maidfile
+
+Tasks live in `maidfile` or `Maidfile.toml`:
+
+```toml
+[tasks.build]
+depends = { stdout = true, tasks = ["clean"] }
+script = ["ant install", "ant run typecheck"]
+
+[tasks.clean]
+script = "rm -rf dist"
+```
+
+Dependencies are quiet by default. Use `stdout = true` or `output = true` when a
+dependency should show its command output.
+
+## Development
+
+```bash
+ant install
+ant src/main.ts typecheck
+ant src/main.ts smoke
+```

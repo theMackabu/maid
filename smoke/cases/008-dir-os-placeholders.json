@@ -1,0 +1,21 @@
+{
+  "id": "008-dir-os-placeholders",
+  "name": "dir and os placeholders",
+  "files": {
+    "maidfile": "[tasks.debug]\nscript = \"echo %{dir.project} %{dir.home} %{os.platform} %{os.arch}\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "debug"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "${root}",
+          "${home}"
+        ]
+      }
+    }
+  ]
+}

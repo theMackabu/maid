@@ -1,0 +1,17 @@
+{
+  "id": "002-version-output",
+  "name": "version output",
+  "steps": [
+    {
+      "run": [
+        "--version"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "maid"
+        ]
+      }
+    }
+  ]
+}

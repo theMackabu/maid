@@ -1,0 +1,22 @@
+{
+  "id": "018-custom-path-option",
+  "name": "custom path option",
+  "files": {
+    "custom.toml": "[tasks.hello]\nscript = \"echo custom\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "--path",
+        "custom",
+        "hello"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "custom"
+        ]
+      }
+    }
+  ]
+}

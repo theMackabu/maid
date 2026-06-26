@@ -1,21 +1,3 @@
-# src
-target
-tests
-bin
-
-# maid
-.maid/cache
-.maid/temp
-
-# environment variables
-.env
-.env.production
-
-# todo
-*.todo
-TODO.md
-
-# jetbrains
-.idea
-.fleet
-test
+.maid/
+node_modules/
+target/

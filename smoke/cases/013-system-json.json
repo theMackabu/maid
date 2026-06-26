@@ -1,0 +1,21 @@
+{
+  "id": "013-system-json",
+  "name": "system json",
+  "files": {
+    "maidfile": "[tasks.hello]\nscript = \"echo hello\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "--system",
+        "json"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "\"hello\""
+        ]
+      }
+    }
+  ]
+}

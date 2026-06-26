@@ -1,0 +1,24 @@
+{
+  "id": "019-discovery-child-dir",
+  "name": "maidfile discovery from child directory",
+  "dirs": [
+    "a/b"
+  ],
+  "files": {
+    "maidfile": "[tasks.root]\nscript = \"echo root-found\"\n"
+  },
+  "steps": [
+    {
+      "cwd": "a/b",
+      "run": [
+        "root"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "root-found"
+        ]
+      }
+    }
+  ]
+}

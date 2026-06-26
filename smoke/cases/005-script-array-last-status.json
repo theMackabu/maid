@@ -1,0 +1,17 @@
+{
+  "id": "005-script-array-last-status",
+  "name": "script array uses last exit status",
+  "files": {
+    "maidfile": "[tasks.ok]\nscript = [\"sh -c 'exit 2'\", \"sh -c 'exit 0'\"]\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "ok"
+      ],
+      "expect": {
+        "status": 0
+      }
+    }
+  ]
+}

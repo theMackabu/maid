@@ -1,0 +1,20 @@
+{
+  "id": "006-failing-task-status",
+  "name": "failing task returns failing status",
+  "files": {
+    "maidfile": "[tasks.bad]\nscript = \"sh -c 'exit 7'\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "bad"
+      ],
+      "expect": {
+        "status": 7,
+        "stdoutIncludes": [
+          "exited with status code"
+        ]
+      }
+    }
+  ]
+}

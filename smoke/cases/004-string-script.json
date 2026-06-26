@@ -1,0 +1,20 @@
+{
+  "id": "004-string-script",
+  "name": "string script",
+  "files": {
+    "maidfile": "[tasks.hello]\nscript = \"echo hello\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "hello"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "hello"
+        ]
+      }
+    }
+  ]
+}

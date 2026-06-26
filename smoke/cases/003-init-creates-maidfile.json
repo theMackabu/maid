@@ -1,0 +1,20 @@
+{
+  "id": "003-init-creates-maidfile",
+  "name": "init creates maidfile",
+  "steps": [
+    {
+      "run": [
+        "--init"
+      ],
+      "expect": {
+        "status": 0,
+        "fileIncludes": [
+          {
+            "path": "maidfile",
+            "text": "[tasks.example]"
+          }
+        ]
+      }
+    }
+  ]
+}

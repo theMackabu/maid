@@ -1,0 +1,43 @@
+{
+  "id": "025-cache-save-restore",
+  "name": "cache save and restore",
+  "dirs": [
+    "src"
+  ],
+  "files": {
+    "src/input.txt": "one\n",
+    "maidfile": "[tasks.build]\nscript = \"mkdir -p out && cat src/input.txt > out/result.txt\"\n\n[tasks.build.cache]\npath = \"src\"\ntarget = [\"out/result.txt\"]\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "build"
+      ],
+      "expect": {
+        "status": 0
+      }
+    },
+    {
+      "remove": [
+        "out"
+      ]
+    },
+    {
+      "run": [
+        "build"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "skipping task due to cached files"
+        ],
+        "fileIncludes": [
+          {
+            "path": "out/result.txt",
+            "text": "one"
+          }
+        ]
+      }
+    }
+  ]
+}

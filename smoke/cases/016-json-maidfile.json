@@ -1,0 +1,20 @@
+{
+  "id": "016-json-maidfile",
+  "name": "json maidfile",
+  "files": {
+    "maidfile.json": "{\"tasks\":{\"hello\":{\"script\":\"echo json\"}}}"
+  },
+  "steps": [
+    {
+      "run": [
+        "hello"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "json"
+        ]
+      }
+    }
+  ]
+}

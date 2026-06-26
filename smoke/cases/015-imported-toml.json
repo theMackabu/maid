@@ -1,0 +1,24 @@
+{
+  "id": "015-imported-toml",
+  "name": "imported toml tasks",
+  "dirs": [
+    "tasks"
+  ],
+  "files": {
+    "maidfile": "import = [\"tasks/build.toml\"]\n\n[tasks.root]\nscript = \"echo root\"\n",
+    "tasks/build.toml": "[tasks.imported]\nscript = \"echo imported\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "imported"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "imported"
+        ]
+      }
+    }
+  ]
+}

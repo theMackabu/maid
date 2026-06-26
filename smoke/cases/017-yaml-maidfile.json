@@ -1,0 +1,20 @@
+{
+  "id": "017-yaml-maidfile",
+  "name": "yaml maidfile",
+  "files": {
+    "maidfile.yaml": "tasks:\n  hello:\n    script: echo yaml\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "hello"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "yaml"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "020-quiet-dependency-output",
+  "name": "quiet dependency output",
+  "files": {
+    "maidfile": "[tasks.dep]\nscript = \"echo hidden-dep\"\n\n[tasks.main]\ndepends = [\"dep\"]\nscript = \"echo main\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "main"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "main"
+        ],
+        "stdoutNotIncludes": [
+          "hidden-dep"
+        ]
+      }
+    }
+  ]
+}

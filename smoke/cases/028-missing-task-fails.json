@@ -1,0 +1,20 @@
+{
+  "id": "028-missing-task-fails",
+  "name": "missing task fails",
+  "files": {
+    "maidfile": "[tasks.noop]\nscript = \"echo noop\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "missing"
+      ],
+      "expect": {
+        "status": 1,
+        "stderrIncludes": [
+          "Could not find the task"
+        ]
+      }
+    }
+  ]
+}

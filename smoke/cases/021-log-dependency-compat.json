@@ -1,0 +1,20 @@
+{
+  "id": "021-log-dependency-compat",
+  "name": "log dependency compatibility",
+  "files": {
+    "maidfile": "[tasks.dep]\nscript = \"echo visible-dep\"\n\n[tasks.main]\ndepends = [\"log:dep\"]\nscript = \"echo main\"\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "main"
+      ],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": [
+          "visible-dep"
+        ]
+      }
+    }
+  ]
+}
