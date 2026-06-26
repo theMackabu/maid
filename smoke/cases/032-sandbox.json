@@ -1,0 +1,32 @@
+{
+  "id": "032-sandbox",
+  "name": "sandbox task runs entry with mounts",
+  "requiresEnv": "MAID_SMOKE_SANDBOX",
+  "dirs": ["out"],
+  "files": {
+    "entry.ts": "import fs from 'node:fs';\nconsole.log('sandbox-smoke-ok');\nfs.writeFileSync('/out/marker.txt', 'sandbox-wrote-this\\n');\n",
+    "boom.ts": "throw new Error('boom from sandbox');\n",
+    "maidfile": "[tasks.box]\nsandbox = { mount = \".:/workspace\", write = \"out:/out\", cwd = \"/workspace\", timeoutMs = 8000 }\nscript = \"entry.ts\"\n\n[tasks.boom]\nsandbox = { mount = \".:/workspace\", cwd = \"/workspace\", timeoutMs = 8000 }\nscript = \"boom.ts\"\n"
+  },
+  "steps": [
+    {
+      "run": ["box"],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": ["sandbox-smoke-ok"],
+        "fileIncludes": [
+          {
+            "path": "out/marker.txt",
+            "text": "sandbox-wrote-this"
+          }
+        ]
+      }
+    },
+    {
+      "run": ["boom"],
+      "expect": {
+        "status": 1
+      }
+    }
+  ]
+}

@@ -1,13 +1,14 @@
-import { spawnSync } from "node:child_process";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 interface SmokeCase {
   name: string;
   dirs?: string[];
   files?: Record<string, string>;
   steps: SmokeStep[];
+  requiresEnv?: string;
 }
 
 interface SmokeStep {
@@ -39,18 +40,29 @@ interface SmokeContext {
   maid: string;
 }
 
-const repoRoot = path.resolve(import.meta.dirname, "..");
-const casesDir = path.join(import.meta.dirname, "cases");
-const maidEntry = path.join(repoRoot, "src", "main.ts");
+const repoRoot = path.resolve(import.meta.dirname, '..');
+const casesDir = path.join(import.meta.dirname, 'cases');
+const maidEntry = path.join(repoRoot, 'src', 'main.ts');
 const antBin = process.execPath;
-const caseFiles = fs.readdirSync(casesDir).filter((file) => file.endsWith(".json")).sort();
+const caseFiles = fs
+  .readdirSync(casesDir)
+  .filter(file => file.endsWith('.json'))
+  .sort();
 
 let passed = 0;
+let skipped = 0;
 const failures: string[] = [];
 
 for (const file of caseFiles) {
   const testCase = readCase(path.join(casesDir, file));
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "maid-smoke-"));
+
+  if (testCase.requiresEnv && !process.env[testCase.requiresEnv]) {
+    skipped++;
+    console.log(`skip ${testCase.name} (set ${testCase.requiresEnv} to run)`);
+    continue;
+  }
+
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'maid-smoke-'));
   const ctx: SmokeContext = { root, maid: maidEntry };
 
   try {
@@ -62,24 +74,24 @@ for (const file of caseFiles) {
     const message = error instanceof Error ? error.message : String(error);
     failures.push(`${testCase.name}: ${message}`);
     console.log(`fail ${testCase.name}`);
-    console.log(`  ${message.replace(/\n/g, "\n  ")}`);
+    console.log(`  ${message.replace(/\n/g, '\n  ')}`);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 }
 
-console.log("");
-console.log(`score ${passed}/${caseFiles.length}`);
+console.log('');
+console.log(`score ${passed}/${caseFiles.length - skipped}${skipped > 0 ? ` (${skipped} skipped)` : ''}`);
 
 if (failures.length > 0) {
-  console.log("");
-  console.log("failures:");
+  console.log('');
+  console.log('failures:');
   for (const failure of failures) console.log(`- ${failure}`);
   process.exit(1);
 }
 
 function readCase(file: string): SmokeCase {
-  const parsed = JSON.parse(fs.readFileSync(file, "utf8")) as Partial<SmokeCase>;
+  const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as Partial<SmokeCase>;
   if (!parsed.name || !Array.isArray(parsed.steps)) {
     throw new Error(`invalid smoke case: ${file}`);
   }
@@ -108,19 +120,14 @@ function runCase(ctx: SmokeContext, testCase: SmokeCase): void {
 }
 
 function maid(ctx: SmokeContext, args: string[], cwd = ctx.root): CommandResult {
-  const result = spawnSync(antBin, [ctx.maid, ...args], {
-    cwd,
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      NO_COLOR: "1"
-    }
-  });
+  const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: '1' };
+  if (process.env.MAID_SMOKE_SANDBOX && !env.ANT_DEBUG) env.ANT_DEBUG = 'sandbox:bypass-manifest';
+  const result = spawnSync(antBin, [ctx.maid, ...args], { cwd, encoding: 'utf8', env });
 
   return {
     status: result.status ?? 1,
-    stdout: result.stdout ?? "",
-    stderr: result.stderr ?? ""
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? ''
   };
 }
 
@@ -144,7 +151,7 @@ function assertExpect(ctx: SmokeContext, name: string, step: number, expect: Smo
   for (const item of expect.fileIncludes ?? []) {
     const file = resolve(ctx, item.path);
     if (!fs.existsSync(file)) throw new Error(`${prefix}: expected file to exist: ${file}`);
-    assertIncludes(`${prefix} ${item.path}`, fs.readFileSync(file, "utf8"), expand(ctx, item.text));
+    assertIncludes(`${prefix} ${item.path}`, fs.readFileSync(file, 'utf8'), expand(ctx, item.text));
   }
 
   for (const item of expect.pathExists ?? []) {
@@ -169,7 +176,7 @@ function resolve(ctx: SmokeContext, target: string): string {
 }
 
 function expand(ctx: SmokeContext, value: string): string {
-  return value.replaceAll("${root}", ctx.root).replaceAll("${home}", os.homedir());
+  return value.replaceAll('${root}', ctx.root).replaceAll('${home}', os.homedir());
 }
 
 function assertIncludes(label: string, value: string, needle: string): void {

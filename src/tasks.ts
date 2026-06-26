@@ -9,7 +9,7 @@ import { hashPath, readStoredCache, restoreTargets, saveTargets, writeStoredCach
 
 import * as ui from './ui.ts';
 import { ant } from './runtime.ts';
-import type { Context, RunOptions, TaskConfig } from './types.ts';
+import type { Context, RunOptions, SandboxConfig, TaskConfig } from './types.ts';
 
 export function taskScripts(task: TaskConfig): string[] {
   return Array.isArray(task.script) ? task.script : [task.script];
@@ -143,6 +143,7 @@ function shellCommand(command: string): [string, string[]] {
 type Stdio = 'pipe' | 'inherit';
 
 function taskPreview(task: TaskConfig, scripts: string[], table: Map<string, string>): string {
+  if (task.sandbox) return `${chalk.magentaBright('sandbox')} ${hydrate(scripts[0] ?? '', table)}`;
   if (task.file) return task.file;
   return scripts
     .map(raw => {
@@ -155,6 +156,10 @@ function taskPreview(task: TaskConfig, scripts: string[], table: Map<string, str
 
 function runScripts(context: Context, task: TaskConfig, scripts: string[], table: Map<string, string>, cwd: string, options: RunOptions): number {
   const stdio: Stdio = options.dependency && !options.logDependency ? 'pipe' : 'inherit';
+
+  if (task.sandbox) {
+    return runSandbox(context, task.sandbox, scripts[0] ?? '', table, stdio);
+  }
 
   if (task.file) {
     return runFile(path.resolve(context.projectRoot, hydrate(task.file, table)), cwd, stdio);
@@ -198,6 +203,45 @@ function runFile(filePath: string, cwd: string, stdio: Stdio): number {
   if (shebang) return runCommand(shebang.cmd, [...shebang.args, filePath], cwd, stdio);
   if (process.platform === 'win32') return runCommand('cmd.exe', ['/d', '/s', '/c', filePath], cwd, stdio);
   return runCommand('/bin/sh', [filePath], cwd, stdio);
+}
+
+function runSandbox(context: Context, sandbox: SandboxConfig, entry: string, table: Map<string, string>, stdio: Stdio): number {
+  if (!ant) throw new Error('Sandbox tasks require the Ant runtime.');
+  const resolvedEntry = hydrate(entry, table);
+  if (!resolvedEntry.trim()) throw new Error('Sandbox task is missing an entry script.');
+
+  const payload = JSON.stringify({
+    entry: resolvedEntry,
+    argv: context.args.slice(1),
+    options: buildSandboxOptions(context.projectRoot, sandbox, table)
+  });
+
+  const runner = path.join(import.meta.dirname, 'sandbox-run.ts');
+  return runCommand(process.execPath, [runner, payload], context.projectRoot, stdio);
+}
+
+function buildSandboxOptions(root: string, sandbox: SandboxConfig, table: Map<string, string>): Record<string, unknown> {
+  const options: Record<string, unknown> = {};
+  if (sandbox.mount) options.mount = sandbox.mount.map(spec => resolveMount(root, hydrate(spec, table)));
+  if (sandbox.write) options.write = sandbox.write.map(spec => resolveMount(root, hydrate(spec, table)));
+  if (sandbox.forward) options.forward = sandbox.forward.map(spec => hydrate(spec, table));
+  if (sandbox.cwd !== undefined) options.cwd = hydrate(sandbox.cwd, table);
+  if (sandbox.timeoutMs !== undefined) options.timeoutMs = sandbox.timeoutMs;
+  if (sandbox.bootTimeoutMs !== undefined) options.bootTimeoutMs = sandbox.bootTimeoutMs;
+  if (sandbox.tty !== undefined) options.tty = sandbox.tty;
+  if (sandbox.ttyRows !== undefined) options.ttyRows = sandbox.ttyRows;
+  if (sandbox.ttyCols !== undefined) options.ttyCols = sandbox.ttyCols;
+  if (sandbox.color !== undefined) options.color = sandbox.color;
+  return options;
+}
+
+function resolveMount(root: string, spec: string): string {
+  const separator = spec.indexOf(':');
+  if (separator === -1) return spec;
+  const host = spec.slice(0, separator);
+  const guest = spec.slice(separator + 1);
+  const absoluteHost = path.isAbsolute(host) ? host : path.resolve(root, host);
+  return `${absoluteHost}:${guest}`;
 }
 
 function runCommand(command: string, args: string[], cwd: string, stdio: Stdio): number {

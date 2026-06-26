@@ -4,7 +4,7 @@ import { parse as parseToml } from 'smol-toml';
 
 import YAML from 'yaml';
 import { isNotFound } from './errors.ts';
-import type { DependencyConfig, Maidfile, TaskConfig } from './types.ts';
+import type { DependencyConfig, Maidfile, SandboxConfig, TaskConfig } from './types.ts';
 
 const EXTENSIONS = ['', 'toml', 'yaml', 'yml', 'json'];
 
@@ -121,6 +121,7 @@ function normalizeTask(value: unknown, name: string, file: string): TaskConfig {
 
   const hasScript = 'script' in value;
   const hasFile = typeof value.file === 'string';
+  const sandbox = normalizeSandbox(value.sandbox, name, file);
 
   if (hasScript && hasFile) {
     throw new Error(`Task '${name}' in ${file} sets both script and file; use one.`);
@@ -129,9 +130,17 @@ function normalizeTask(value: unknown, name: string, file: string): TaskConfig {
     throw new Error(`Task '${name}' in ${file} is missing script or file.`);
   }
 
+  const script = hasScript ? normalizeScript(value.script, name, file) : [];
+
+  if (sandbox) {
+    if (hasFile) throw new Error(`Task '${name}' in ${file} cannot use file with sandbox; set script to the entry.`);
+    if (typeof script !== 'string') throw new Error(`Task '${name}' in ${file} sandbox script must be a single entry file.`);
+  }
+
   return {
-    script: hasScript ? normalizeScript(value.script, name, file) : [],
+    script,
     file: hasFile ? (value.file as string) : undefined,
+    sandbox,
     hide: typeof value.hide === 'boolean' ? value.hide : undefined,
     path: typeof value.path === 'string' ? value.path : undefined,
     info: typeof value.info === 'string' ? value.info : undefined,
@@ -139,6 +148,38 @@ function normalizeTask(value: unknown, name: string, file: string): TaskConfig {
     depends: normalizeDepends(value.depends, name, file),
     retry: normalizeRetry(value.retry, name, file)
   };
+}
+
+function normalizeSandbox(value: unknown, name: string, file: string): SandboxConfig | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) throw new Error(`Task '${name}' in ${file} has an invalid sandbox block.`);
+
+  const config: SandboxConfig = {};
+  const mount = normalizeStringList(value.mount);
+  const write = normalizeStringList(value.write);
+  const forward = normalizeStringList(value.forward);
+  if (mount) config.mount = mount;
+  if (write) config.write = write;
+  if (forward) config.forward = forward;
+  if (typeof value.cwd === 'string') config.cwd = value.cwd;
+  if (typeof value.color === 'boolean') config.color = value.color;
+  if (typeof value.tty === 'boolean') config.tty = value.tty;
+
+  for (const key of ['timeoutMs', 'bootTimeoutMs', 'ttyRows', 'ttyCols'] as const) {
+    if (value[key] === undefined) continue;
+    const num = Number(value[key]);
+    if (!Number.isFinite(num) || num < 0) throw new Error(`Task '${name}' in ${file} has an invalid sandbox ${key}.`);
+    config[key] = Math.trunc(num);
+  }
+
+  return config;
+}
+
+function normalizeStringList(value: unknown): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.map(String);
+  return undefined;
 }
 
 function normalizeScript(value: unknown, name: string, file: string): string | string[] {

@@ -62,6 +62,22 @@ fi
 Or point at a file with `file = "scripts/deploy.sh"` (resolved relative to the
 maidfile). A task uses either `script` or `file`, not both.
 
+### Sandboxed tasks
+
+Give a task a `sandbox` table and its `script` becomes an entry file run inside
+an [Ant sandbox](https://antjs.org) instead of the host shell. The guest's
+output streams through and its exit status becomes the task's:
+
+```toml
+[tasks.untrusted]
+sandbox = { mount = ".:/workspace", write = "tmp:/tmp", cwd = "/workspace", timeoutMs = 10000 }
+script = "src/test.ts"
+```
+
+`mount` is read-only and `write` is read-write (both `host:guest`, host side
+resolved against the maidfile); `mount`/`write`/`forward` also accept a list.
+Sandbox tasks require the Ant runtime.
+
 ## Development
 
 ```bash

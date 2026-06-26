@@ -14,12 +14,26 @@ export interface Maidfile {
 export interface TaskConfig {
   script: string | string[];
   file?: string;
+  sandbox?: SandboxConfig;
   hide?: boolean;
   path?: string;
   info?: string;
   cache?: CacheConfig;
   depends?: DependencyConfig[];
   retry?: RetryConfig;
+}
+
+export interface SandboxConfig {
+  mount?: string[];
+  write?: string[];
+  forward?: string[];
+  cwd?: string;
+  timeoutMs?: number;
+  bootTimeoutMs?: number;
+  tty?: boolean;
+  ttyRows?: number;
+  ttyCols?: number;
+  color?: boolean;
 }
 
 export interface CacheConfig {
