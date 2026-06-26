@@ -124,9 +124,7 @@ function resolveTaskPath(context: Context, task: TaskConfig, table: Map<string, 
 }
 
 function isHidden(name: string, task: TaskConfig): boolean {
-  if (name.startsWith('_') || task.hide) return true;
-  const remote = task.remote;
-  return Boolean(remote && typeof remote === 'object' && 'exclusive' in remote && (remote as any).exclusive === true);
+  return name.startsWith('_') || task.hide === true;
 }
 
 function formatDuration(ms: number): string {

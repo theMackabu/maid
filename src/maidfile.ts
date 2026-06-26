@@ -124,7 +124,6 @@ function normalizeTask(value: unknown, name: string, file: string): TaskConfig {
     path: typeof value.path === 'string' ? value.path : undefined,
     info: typeof value.info === 'string' ? value.info : undefined,
     cache: normalizeCache(value.cache, name, file),
-    remote: value.remote,
     depends: normalizeDepends(value.depends, name, file),
     retry: normalizeRetry(value.retry, name, file)
   };

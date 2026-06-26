@@ -7,7 +7,6 @@ export interface Maidfile {
   project?: {
     name?: string;
     version?: string;
-    server?: unknown;
   };
   tasks: Record<string, TaskConfig>;
 }
@@ -18,7 +17,6 @@ export interface TaskConfig {
   path?: string;
   info?: string;
   cache?: CacheConfig;
-  remote?: unknown;
   depends?: DependencyConfig[];
   retry?: RetryConfig;
 }
@@ -48,9 +46,6 @@ export interface CliOptions {
   list: boolean;
   init: boolean;
   cleanCache: boolean;
-  remote: boolean;
-  health: boolean;
-  watch?: string;
   project?: 'info' | 'env';
   system?: 'json' | 'json-hydrated';
   help: boolean;

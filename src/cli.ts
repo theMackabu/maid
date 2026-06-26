@@ -15,8 +15,6 @@ export function parseArgs(argv: string[]): CliOptions {
     list: false,
     init: false,
     cleanCache: false,
-    remote: false,
-    health: false,
     project: undefined,
     system: undefined,
     help: false,
@@ -47,12 +45,6 @@ export function parseArgs(argv: string[]): CliOptions {
       options.init = true;
     } else if (arg === '-C' || arg === '--clean-cache' || arg === '--purge') {
       options.cleanCache = true;
-    } else if (arg === '-r' || arg === '--remote' || arg === '--online') {
-      options.remote = true;
-    } else if (arg === '-H' || arg === '--health') {
-      options.health = true;
-    } else if (arg === '-W' || arg === '--watch') {
-      options.watch = requireValue(argv, ++index, arg);
     } else if (arg === '-w' || arg === '--project') {
       options.project = parseProject(requireValue(argv, ++index, arg));
     } else if (arg === '-g' || arg === '--system') {

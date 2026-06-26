@@ -25,18 +25,6 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  if (options.remote) {
-    throw new Error('Remote/server mode was removed in maid-next.');
-  }
-
-  if (options.health) {
-    throw new Error('Health checks belonged to the removed remote server mode.');
-  }
-
-  if (options.watch) {
-    throw new Error('Watch mode is not implemented in maid-next yet.');
-  }
-
   const maidfile = loadMaidfile(options.path);
   const projectRoot = findProjectRoot(options.path);
   const context: Context = {
