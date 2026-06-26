@@ -52,7 +52,7 @@ export interface CliOptions {
   health: boolean;
   watch?: string;
   project?: 'info' | 'env';
-  system?: 'check-updates' | 'upgrade' | 'json' | 'json-hydrated';
+  system?: 'json' | 'json-hydrated';
   help: boolean;
   version: boolean;
 }

@@ -118,19 +118,6 @@ async function runSystemCommand(context: Context, command: NonNullable<ReturnTyp
     return 0;
   }
 
-  if (command === 'check-updates') {
-    const response = await fetch('https://api.maid.ci/versions/latest');
-    if (!response.ok) throw new Error(`Unable to check for updates: HTTP ${response.status}`);
-    const body = (await response.json()) as { version?: string };
-    if (body.version === undefined) throw new Error('Unable to check for updates: malformed response');
-    console.log(`Latest Maid version: ${chalk.yellowBright(body.version)}`);
-    return 0;
-  }
-
-  if (command === 'upgrade') {
-    throw new Error('Upgrade is not implemented in maid-next yet.');
-  }
-
   return 0;
 }
 
