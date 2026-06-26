@@ -64,4 +64,5 @@ export interface RunOptions {
   dependency: boolean;
   logDependency: boolean;
   stack: string[];
+  table?: Map<string, string>;
 }

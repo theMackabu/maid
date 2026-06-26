@@ -9,6 +9,10 @@ import { hashPath, readStoredCache, restoreTargets, saveTargets, writeStoredCach
 import * as ui from './ui.ts';
 import type { Context, RunOptions, TaskConfig } from './types.ts';
 
+const antRuntime = globalThis as typeof globalThis & {
+  Ant?: { msleep?: (milliseconds: number) => void };
+};
+
 export function taskScripts(task: TaskConfig): string[] {
   return Array.isArray(task.script) ? task.script : [task.script];
 }
@@ -37,9 +41,11 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
     throw new Error(`Dependency cycle detected: ${[...options.stack, name].join(' -> ')}`);
   }
 
+  const table = options.table ?? createTable(context);
   const nextStack = [...options.stack, name];
   const dependencies = task.depends ?? [];
   const depStart = Date.now();
+
   let depStatusLine: ui.DependencyStatus | undefined;
   for (const [index, dep] of dependencies.entries()) {
     const depName = dep.task;
@@ -49,7 +55,8 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
       ...options,
       dependency: true,
       logDependency: dep.output,
-      stack: nextStack
+      stack: nextStack,
+      table
     });
     if (depStatus !== 0) return depStatus;
   }
@@ -63,8 +70,8 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
     console.log('');
   }
 
-  const table = createTable(context);
   const cwd = resolveTaskPath(context, task, table);
+  const scripts = taskScripts(task);
   const cache = task.cache;
   let cacheHash: string | null = null;
 
@@ -79,9 +86,7 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
   }
 
   if (!options.quiet && !options.dependency) {
-    const scriptPreview = taskScripts(task)
-      .map(script => hydrateShell(script, table))
-      .join('; ');
+    const scriptPreview = scripts.map(script => hydrateShell(script, table)).join('; ');
     ui.taskStart(scriptPreview, cwd === context.projectRoot ? null : cwd);
   }
 
@@ -91,7 +96,7 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
   let exitCode = 0;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    exitCode = runScripts(taskScripts(task), table, cwd, options);
+    exitCode = runScripts(scripts, table, cwd, options);
     if (exitCode === 0 || attempt === attempts) break;
     if (!options.quiet && !options.dependency) ui.retrying(name, attempt + 1, attempts, exitCode);
     if (delayMs > 0) sleep(delayMs);
@@ -156,8 +161,20 @@ function runScripts(scripts: string[], table: Map<string, string>, cwd: string, 
 }
 
 function sleep(ms: number): void {
+  if (typeof antRuntime.Ant?.msleep === 'function') {
+    antRuntime.Ant.msleep(ms);
+    return;
+  }
+
+  if (blockingSleep(ms)) return;
   const end = Date.now() + ms;
   while (Date.now() < end) {}
+}
+
+function blockingSleep(ms: number): boolean {
+  if (typeof SharedArrayBuffer === 'undefined' || typeof Atomics.wait !== 'function') return false;
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+  return true;
 }
 
 export function initMaidfile(): void {

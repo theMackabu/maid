@@ -1,10 +1,11 @@
 import chalk from 'chalk';
+import path from 'node:path';
 import { removeCache } from './cache.ts';
 import type { Context } from './types.ts';
 
 import { parseArgs, printHelp, VERSION } from './cli.ts';
 import { createTable, hydrateJson } from './placeholders.ts';
-import { findProjectRoot, loadMaidfile } from './maidfile.ts';
+import { findMaidfile, loadMaidfileFile } from './maidfile.ts';
 import { initMaidfile, printTasks, promptTask, runTask } from './tasks.ts';
 
 async function main(): Promise<number> {
@@ -25,8 +26,11 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  const maidfile = loadMaidfile(options.path);
-  const projectRoot = findProjectRoot(options.path);
+  const maidfilePath = findMaidfile(process.cwd(), options.path);
+  if (!maidfilePath) throw new Error('Cannot find maidfile. Does it exist?');
+
+  const maidfile = loadMaidfileFile(maidfilePath);
+  const projectRoot = path.dirname(maidfilePath);
   const context: Context = {
     maidfile,
     projectRoot,

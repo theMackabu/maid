@@ -9,13 +9,13 @@ Maid is written in TypeScript and runs on [Ant](https://antjs.org), Node.js, Bun
 Run without installing:
 
 ```bash
-antx maid
+antx land:maid
 ```
 
 Install globally:
 
 ```bash
-ant i -g maid
+ant i -g land:maid
 ```
 
 ## Usage

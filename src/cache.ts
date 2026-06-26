@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 
 import type { CacheConfig } from './types.ts';
+import { isNotFound } from './errors.ts';
 import { cacheCopied, cacheSaved } from './ui.ts';
 import { parse as parseToml, stringify as stringifyToml } from 'smol-toml';
 
@@ -21,8 +22,13 @@ export function maidDir(projectRoot: string): string {
 
 export function readStoredCache(projectRoot: string, taskName: string): StoredCache | null {
   const file = path.join(cacheDir(projectRoot, taskName), `${taskName}.toml`);
-  if (!fs.existsSync(file)) return null;
-  const parsed = parseToml(fs.readFileSync(file, 'utf8')) as Partial<StoredCache>;
+  let parsed: Partial<StoredCache>;
+  try {
+    parsed = parseToml(fs.readFileSync(file, 'utf8')) as Partial<StoredCache>;
+  } catch (error) {
+    if (isNotFound(error)) return null;
+    throw error;
+  }
   if (typeof parsed.hash !== 'string' || !Array.isArray(parsed.target)) return null;
   return { hash: parsed.hash, target: parsed.target.map(String) };
 }
@@ -70,12 +76,15 @@ export function removeCache(projectRoot: string): boolean {
 }
 
 function hashEntry(entry: string, hash: crypto.Hash, root: string): void {
-  if (!fs.existsSync(entry)) {
+  let stat: fs.Stats;
+  try {
+    stat = fs.statSync(entry);
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
     hash.update(`missing:${path.relative(root, entry)}`);
     return;
   }
 
-  const stat = fs.statSync(entry);
   const relative = path.relative(root, entry);
   hash.update(`${stat.isDirectory() ? 'dir' : 'file'}:${relative}:${stat.size}:${Math.trunc(stat.mtimeMs)}`);
 

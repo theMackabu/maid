@@ -3,6 +3,7 @@ import path from 'node:path';
 import { parse as parseToml } from 'smol-toml';
 
 import YAML from 'yaml';
+import { isNotFound } from './errors.ts';
 import type { DependencyConfig, Maidfile, TaskConfig } from './types.ts';
 
 const EXTENSIONS = ['', 'toml', 'yaml', 'yml', 'json'];
@@ -13,7 +14,7 @@ export function findMaidfile(start: string, requestedName: string): string | nul
   while (true) {
     for (const ext of EXTENSIONS) {
       const candidate = ext ? path.join(dir, `${requestedName}.${ext}`) : path.join(dir, requestedName);
-      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) return candidate;
+      if (isFile(candidate)) return candidate;
     }
 
     const parent = path.dirname(dir);
@@ -31,6 +32,10 @@ export function findProjectRoot(requestedName: string): string {
 export function loadMaidfile(requestedName: string): Maidfile {
   const file = findMaidfile(process.cwd(), requestedName);
   if (!file) throw new Error('Cannot find maidfile. Does it exist?');
+  return loadMaidfileFile(file);
+}
+
+export function loadMaidfileFile(file: string): Maidfile {
   return loadMaidfileAt(file, new Set());
 }
 
@@ -57,11 +62,11 @@ function loadMaidfileAt(file: string, seen: Set<string>): Maidfile {
 
 function resolveImport(fromDir: string, specifier: string): string {
   const direct = path.resolve(fromDir, specifier);
-  if (fs.existsSync(direct) && fs.statSync(direct).isFile()) return direct;
+  if (isFile(direct)) return direct;
 
   for (const ext of EXTENSIONS.filter(Boolean)) {
     const candidate = `${direct}.${ext}`;
-    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) return candidate;
+    if (isFile(candidate)) return candidate;
   }
 
   throw new Error(`${specifier} cannot be imported. Does the file exist?`);
@@ -232,4 +237,13 @@ function mergeMaidfiles(left: Maidfile, right: Maidfile): Maidfile {
 
 function isRecord(value: unknown): value is Record<string, any> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isFile(file: string): boolean {
+  try {
+    return fs.statSync(file).isFile();
+  } catch (error) {
+    if (isNotFound(error)) return false;
+    throw error;
+  }
 }
