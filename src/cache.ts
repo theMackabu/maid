@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 
 import type { CacheConfig } from './types.ts';
 import { isNotFound } from './errors.ts';
@@ -64,7 +65,7 @@ export function saveTargets(projectRoot: string, taskName: string, cache: CacheC
 export function hashPath(projectRoot: string, input: string): string {
   const target = path.resolve(projectRoot, input);
   const hash = crypto.createHash('sha256');
-  hashEntry(target, hash, projectRoot);
+  if (!hashGitVisibleDirectory(projectRoot, target, hash)) hashEntry(target, hash, projectRoot);
   return hash.digest('hex');
 }
 
@@ -94,6 +95,35 @@ function hashEntry(entry: string, hash: crypto.Hash, root: string): void {
   } else {
     hash.update(fs.readFileSync(entry));
   }
+}
+
+function hashGitVisibleDirectory(projectRoot: string, target: string, hash: crypto.Hash): boolean {
+  let stat: fs.Stats;
+  try {
+    stat = fs.statSync(target);
+  } catch (error) {
+    if (isNotFound(error)) return false;
+    throw error;
+  }
+
+  if (!stat.isDirectory()) return false;
+
+  const relative = path.relative(projectRoot, target) || '.';
+  if (relative.startsWith('..') || path.isAbsolute(relative)) return false;
+
+  const result = spawnSync('git', ['ls-files', '-co', '--exclude-standard', '-z', '--', relative], {
+    cwd: projectRoot,
+    encoding: 'buffer',
+    stdio: ['ignore', 'pipe', 'ignore']
+  });
+
+  if (result.error || result.status !== 0) return false;
+
+  const files = result.stdout.toString('utf8').split('\0').filter(Boolean).sort();
+  hash.update(`git-visible-dir:${path.relative(projectRoot, target)}`);
+  for (const file of files) hashEntry(path.resolve(projectRoot, file), hash, projectRoot);
+
+  return true;
 }
 
 function sizeOf(file: string): number {

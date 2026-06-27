@@ -1,0 +1,40 @@
+{
+  "id": "033-cache-ignores-gitignored-inputs",
+  "name": "cache ignores gitignored inputs",
+  "dirs": ["src"],
+  "files": {
+    ".gitignore": "/src/.build-cache\n",
+    "src/input.txt": "one\n",
+    "maidfile": "[tasks.initgit]\nscript = \"git init -q\"\n\n[tasks.build]\nscript = \"mkdir -p src/.build-cache out && date +%s > src/.build-cache/stamp && cat src/input.txt > out/result.txt\"\n\n[tasks.build.cache]\npath = \"src\"\ntarget = [\"out/result.txt\"]\n"
+  },
+  "steps": [
+    {
+      "run": ["initgit"],
+      "expect": {
+        "status": 0
+      }
+    },
+    {
+      "run": ["build"],
+      "expect": {
+        "status": 0
+      }
+    },
+    {
+      "remove": ["out"]
+    },
+    {
+      "run": ["build"],
+      "expect": {
+        "status": 0,
+        "stdoutIncludes": ["skipping task due to cached files"],
+        "fileIncludes": [
+          {
+            "path": "out/result.txt",
+            "text": "one"
+          }
+        ]
+      }
+    }
+  ]
+}
