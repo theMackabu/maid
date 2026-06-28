@@ -18,8 +18,7 @@ fn main() {
 
   package::emit_rerun_rules();
   artifact::download_ant(&out_dir);
-  let version = package::version(&manifest_dir);
 
-  bundle::build(&manifest_dir, "src/main.ts", &out_dir.join("maid-main.mjs"), &version);
-  bundle::build(&manifest_dir, "src/sandbox-run.ts", &out_dir.join("maid-sandbox-run.mjs"), &version);
+  bundle::copy_prebuilt(&manifest_dir, "maid-main.mjs", &out_dir.join("maid-main.mjs"));
+  bundle::copy_prebuilt(&manifest_dir, "maid-sandbox-run.mjs", &out_dir.join("maid-sandbox-run.mjs"));
 }

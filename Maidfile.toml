@@ -3,9 +3,10 @@ MAID_SMOKE_SANDBOX = true
 
 [project]
 name = "maid"
-version = "0.4.1"
+version = "0.4.2"
 
 [tasks]
 start = { info = "Run Maid with Ant", script = "ant src/main.ts" }
 typecheck = { info = "Type-check TypeScript", script = "antx tsc --noEmit" }
 smoke = { info = "Run feature smoke tests", script = "ant smoke/run.ts" }
+publish = { info = "Prebundle JavaScript and publish the crate", file = "build/publish.sh" }

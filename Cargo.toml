@@ -1,11 +1,24 @@
 [package]
 name = "maid"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/theMackabu/maid"
 description = "Fast local task runner for project scripts, dependencies, and cached build steps."
 build = "build.rs"
+
+include = [
+  "Cargo.lock",
+  "Cargo.toml",
+  "LICENSE.txt",
+  "Maidfile.toml",
+  "README.md",
+  "build.rs",
+  "build/**",
+  "generated/maid-main.mjs",
+  "generated/maid-sandbox-run.mjs",
+  "src/main.rs"
+]
 
 [[bin]]
 name = "maid"

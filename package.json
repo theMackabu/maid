@@ -1,6 +1,6 @@
 {
   "name": "maid",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "license": "MIT",
   "type": "module",
   "description": "Fast local task runner for project scripts, dependencies, and cached build steps.",
@@ -20,6 +20,7 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "typescript": "^5.9.0",
-    "@types/chalk": "^2.2.4"
+    "@types/chalk": "^2.2.4",
+    "esbuild": "^0.28.1"
   }
 }
