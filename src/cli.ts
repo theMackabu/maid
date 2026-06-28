@@ -105,6 +105,9 @@ function parseSystem(value: string): CliOptions['system'] {
 }
 
 function readVersion(): string {
+  const bundledVersion = (globalThis as typeof globalThis & { __MAID_VERSION__?: string }).__MAID_VERSION__;
+  if (bundledVersion) return bundledVersion;
+
   const packagePath = path.resolve(import.meta.dirname, '..', 'package.json');
   const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8')) as { name?: string; version?: string };
   return `${pkg.name ?? 'maid'} ${pkg.version ?? '0.0.0'}`;

@@ -1,3 +1,5 @@
 .maid/
 node_modules/
 target/
+generated/
+src-rs/generated/

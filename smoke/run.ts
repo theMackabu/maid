@@ -43,7 +43,10 @@ interface SmokeContext {
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const casesDir = path.join(import.meta.dirname, 'cases');
 const maidEntry = path.join(repoRoot, 'src', 'main.ts');
+
+const maidBin = process.env.MAID_SMOKE_BIN;
 const antBin = process.execPath;
+
 const caseFiles = fs
   .readdirSync(casesDir)
   .filter(file => file.endsWith('.json'))
@@ -63,7 +66,7 @@ for (const file of caseFiles) {
   }
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'maid-smoke-'));
-  const ctx: SmokeContext = { root, maid: maidEntry };
+  const ctx: SmokeContext = { root, maid: maidBin ?? maidEntry };
 
   try {
     setupCase(ctx, testCase);
@@ -122,7 +125,9 @@ function runCase(ctx: SmokeContext, testCase: SmokeCase): void {
 function maid(ctx: SmokeContext, args: string[], cwd = ctx.root): CommandResult {
   const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: '1' };
   if (process.env.MAID_SMOKE_SANDBOX && !env.ANT_DEBUG) env.ANT_DEBUG = 'sandbox:bypass-manifest';
-  const result = spawnSync(antBin, [ctx.maid, ...args], { cwd, encoding: 'utf8', env });
+  const result = maidBin
+    ? spawnSync(ctx.maid, args, { cwd, encoding: 'utf8', env })
+    : spawnSync(antBin, [ctx.maid, ...args], { cwd, encoding: 'utf8', env });
 
   return {
     status: result.status ?? 1,
