@@ -48,4 +48,4 @@ if [[ "$mode" == "--prebuild-only" ]]; then
   exit 0
 fi
 
-cargo publish "$@"
+cargo publish "$@" --allow-dirty
