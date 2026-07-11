@@ -62,6 +62,19 @@ fi
 Or point at a file with `file = "scripts/deploy.sh"` (resolved relative to the
 maidfile). A task uses either `script` or `file`, not both.
 
+For an interactive command that should take over Maid's process, set
+`exec = true`. Maid prints the command when it starts, then leaves the terminal,
+signals, exit status, and lifetime to that command without printing a completion
+summary afterward:
+
+```toml
+[tasks.shell]
+exec = true
+script = "nix develop --command zsh"
+```
+
+An exec task must contain one script and cannot be used as a dependency.
+
 ### Sandboxed tasks
 
 Give a task a `sandbox` table and its `script` becomes an entry file run inside

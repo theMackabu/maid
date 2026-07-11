@@ -40,12 +40,77 @@ fn main() -> ExitCode {
 
 fn run() -> io::Result<u8> {
   let runtime = Runtime::create()?;
+  let handoff = runtime.dir.join("exec-handoff");
 
   let mut command = Command::new(&runtime.ant);
-  command.arg(&runtime.main).args(env::args_os().skip(1));
+  command.arg(&runtime.main).args(env::args_os().skip(1)).env("MAID_EXEC_HANDOFF", &handoff);
 
   let status = command.status()?;
+  if status.success() && handoff.is_file() {
+    let spec = ExecSpec::read(&handoff)?;
+    drop(runtime);
+    return spec.run();
+  }
   Ok(status.code().unwrap_or(1).try_into().unwrap_or(1))
+}
+
+struct ExecSpec {
+  cwd: PathBuf,
+  command: String,
+  args: Vec<String>,
+  env: Vec<(String, String)>,
+}
+
+impl ExecSpec {
+  fn read(path: &Path) -> io::Result<Self> {
+    let contents = fs::read_to_string(path)?;
+    let mut fields = contents.split('\0');
+    if fields.next() != Some("maid-exec-v1") {
+      return Err(io::Error::new(io::ErrorKind::InvalidData, "invalid exec handoff"));
+    }
+
+    let cwd = PathBuf::from(next_exec_field(&mut fields, "cwd")?);
+    let command = next_exec_field(&mut fields, "command")?.to_owned();
+    let arg_count = parse_exec_count(next_exec_field(&mut fields, "argument count")?)?;
+    let mut args = Vec::with_capacity(arg_count);
+    for _ in 0..arg_count {
+      args.push(next_exec_field(&mut fields, "argument")?.to_owned());
+    }
+
+    let env_count = parse_exec_count(next_exec_field(&mut fields, "environment count")?)?;
+    let mut env = Vec::with_capacity(env_count);
+    for _ in 0..env_count {
+      let key = next_exec_field(&mut fields, "environment key")?.to_owned();
+      let value = next_exec_field(&mut fields, "environment value")?.to_owned();
+      env.push((key, value));
+    }
+
+    if fields.next().is_some() {
+      return Err(io::Error::new(io::ErrorKind::InvalidData, "invalid trailing exec handoff data"));
+    }
+    Ok(Self { cwd, command, args, env })
+  }
+
+  #[cfg(unix)]
+  fn run(self) -> io::Result<u8> {
+    use std::os::unix::process::CommandExt;
+    let error = Command::new(self.command).args(self.args).current_dir(self.cwd).env_clear().envs(self.env).exec();
+    Err(error)
+  }
+
+  #[cfg(windows)]
+  fn run(self) -> io::Result<u8> {
+    let status = Command::new(self.command).args(self.args).current_dir(self.cwd).env_clear().envs(self.env).status()?;
+    Ok(status.code().unwrap_or(1).try_into().unwrap_or(1))
+  }
+}
+
+fn next_exec_field<'a>(fields: &mut impl Iterator<Item = &'a str>, name: &str) -> io::Result<&'a str> {
+  fields.next().ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, format!("exec handoff is missing {name}")))
+}
+
+fn parse_exec_count(value: &str) -> io::Result<usize> {
+  value.parse().map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "invalid exec handoff count"))
 }
 
 struct Runtime {

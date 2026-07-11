@@ -131,16 +131,23 @@ function normalizeTask(value: unknown, name: string, file: string): TaskConfig {
   }
 
   const script = hasScript ? normalizeScript(value.script, name, file) : [];
+  const exec = value.exec === true;
 
   if (sandbox) {
     if (hasFile) throw new Error(`Task '${name}' in ${file} cannot use file with sandbox; set script to the entry.`);
     if (typeof script !== 'string') throw new Error(`Task '${name}' in ${file} sandbox script must be a single entry file.`);
   }
+  if (exec && Array.isArray(script)) throw new Error(`Task '${name}' in ${file} uses exec and must have a single script.`);
+  if (exec && hasFile) throw new Error(`Task '${name}' in ${file} cannot use exec with file.`);
+  if (exec && sandbox) throw new Error(`Task '${name}' in ${file} cannot use exec with sandbox.`);
+  if (exec && value.cache !== undefined) throw new Error(`Task '${name}' in ${file} cannot use exec with cache.`);
+  if (exec && value.retry !== undefined) throw new Error(`Task '${name}' in ${file} cannot use exec with retry.`);
 
   return {
     script,
     file: hasFile ? (value.file as string) : undefined,
     sandbox,
+    exec: typeof value.exec === 'boolean' ? value.exec : undefined,
     hide: typeof value.hide === 'boolean' ? value.hide : undefined,
     path: typeof value.path === 'string' ? value.path : undefined,
     info: typeof value.info === 'string' ? value.info : undefined,

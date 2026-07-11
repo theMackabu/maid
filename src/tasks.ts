@@ -8,7 +8,7 @@ import { createTable, hydrate, hydrateShell } from './placeholders.ts';
 import { hashPath, readStoredCache, restoreTargets, saveTargets, writeStoredCache } from './cache.ts';
 
 import * as ui from './ui.ts';
-import { ant } from './runtime.ts';
+import { ant, replaceProcess } from './runtime.ts';
 import type { Context, RunOptions, SandboxConfig, TaskConfig } from './types.ts';
 
 export function taskScripts(task: TaskConfig): string[] {
@@ -37,6 +37,9 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
 
   if (options.stack.includes(name)) {
     throw new Error(`Dependency cycle detected: ${[...options.stack, name].join(' -> ')}`);
+  }
+  if (task.exec && options.dependency) {
+    throw new Error(`Task '${name}' uses exec and cannot run as a dependency.`);
   }
 
   const table = options.table ?? createTable(context);
@@ -99,6 +102,7 @@ export function runTask(context: Context, name: string, options: RunOptions): nu
     if (!options.quiet && !options.dependency) ui.retrying(name, attempt + 1, attempts, exitCode);
     if (delayMs > 0) sleep(delayMs);
   }
+  if (task.exec) return exitCode;
 
   const elapsed = formatDuration(Date.now() - start);
   if (!options.quiet && !options.dependency) {
@@ -163,6 +167,14 @@ function runScripts(context: Context, task: TaskConfig, scripts: string[], table
 
   if (task.file) {
     return runFile(path.resolve(context.projectRoot, hydrate(task.file, table)), cwd, stdio);
+  }
+
+  if (task.exec) {
+    if (scripts.length !== 1) throw new Error('An exec task must have a single script.');
+    const command = hydrateShell(scripts[0], table);
+    const [shell, args] = shellCommand(command);
+    replaceProcess(shell, args, cwd);
+    return runCommand(shell, args, cwd, stdio);
   }
 
   let exitCode = 0;

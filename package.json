@@ -1,6 +1,6 @@
 {
   "name": "maid",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "license": "MIT",
   "type": "module",
   "description": "Fast local task runner for project scripts, dependencies, and cached build steps.",

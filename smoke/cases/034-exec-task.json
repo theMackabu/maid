@@ -1,0 +1,17 @@
+{
+  "id": "034-exec-task",
+  "name": "exec task omits completion summary",
+  "files": {
+    "maidfile": "[tasks.shell]\nexec = true\nscript = \"sh -c 'exit 127'\"\n"
+  },
+  "steps": [
+    {
+      "run": ["shell"],
+      "expect": {
+        "status": 127,
+        "stdoutIncludes": ["sh -c 'exit 127'"],
+        "stdoutNotIncludes": ["exited with status code", "shell took"]
+      }
+    }
+  ]
+}

@@ -15,6 +15,7 @@ export interface TaskConfig {
   script: string | string[];
   file?: string;
   sandbox?: SandboxConfig;
+  exec?: boolean;
   hide?: boolean;
   path?: string;
   info?: string;
